@@ -28,8 +28,8 @@ namespace Company.Function
         public Container container;
 
         // The name of the database and container we will create
-        private string databaseId = "MesajesDatabase";
-        private string containerId = "MesajesContainer";
+        private string databaseId = "MensajesDatabase";
+        private string containerId = "MensajesContainer";
 
         public async Task CreateDatabaseAsync()
         {

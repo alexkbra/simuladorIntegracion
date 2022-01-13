@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.SignalRService;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Company.Function
 {
@@ -62,7 +63,7 @@ namespace Company.Function
 
             return new ContentResult
             {
-                Content = JsonConvert.SerializeObject(result),
+                Content = JsonConvert.SerializeObject(result, new IsoDateTimeConverter() { DateTimeFormat = "MM/dd/yy HH:mm:ss" }),
                 ContentType = "application/json",
             };
         }
