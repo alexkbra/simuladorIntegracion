@@ -8,15 +8,15 @@ using Microsoft.Azure.Cosmos;
 namespace Company.Function
 {
     public class Program
-    {   
+    {
 
         /// The Azure Cosmos DB endpoint for running this GetStarted sample.
         //private string EndpointUrl = Environment.GetEnvironmentVariable("EndpointUrl");
-        private string EndpointUrl = "https://emuladorapicosmosdb.documents.azure.com:443/";//Environment.GetEnvironmentVariable("EndpointUrl");
+        private string EndpointUrl = "https://emuladorpotapicosmosdb.documents.azure.com:443/";//Environment.GetEnvironmentVariable("EndpointUrl");
 
         /// The primary key for the Azure DocumentDB account.
         //private string PrimaryKey = Environment.GetEnvironmentVariable("PrimaryKey");
-        private string PrimaryKey = "LOgCHFJzMx74LoRI2SMXLTTvvLwvTTRVKvGkmIiBbDUNaF6hKSjVPjKZUNjW4MD3ohpAg59bZPBFRtGmnN3xHA==";//Environment.GetEnvironmentVariable("PrimaryKey");
+        private string PrimaryKey = "TC3K9slCkvF6uUe42P4CyuCU41w4VWIifKHOBCv69Dst32LFy4rYBY33B6uUARiut1FyxsisvNtmgYn1eYV7SQ==";//Environment.GetEnvironmentVariable("PrimaryKey");
 
         // The Cosmos client instance
         private CosmosClient cosmosClient;
@@ -62,7 +62,7 @@ namespace Company.Function
         public async Task<Mensaje[]> QueryItemsAsync(string variable, string inittime, string endtime)
         {
             //var sqlQueryText = "SELECT * FROM c WHERE c." + variable + "time between inittime and endtime";
-            var sqlQueryText = "SELECT * FROM c WHERE c."+variable+" >= '"+inittime+"' and c."+variable+" <= '"+endtime+"'";
+            var sqlQueryText = "SELECT * FROM c WHERE c." + variable + " >= '" + inittime + "' and c." + variable + " <= '" + endtime + "'";
             Console.WriteLine("Running query: {0}\n", sqlQueryText);
 
             QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
@@ -80,6 +80,28 @@ namespace Company.Function
                 }
             }
             return mensajes.ToArray();
+        }
+
+        public async Task<Sensores[]> QueryItemsSensoresAsync(string sensor, string variable, string inittime, string endtime)
+        {
+            var sqlQueryText = $"SELECT * from c.{sensor} AS Sensores WHERE Sensores.{variable} >= '{inittime}' and Sensores.{variable} <= '{endtime}'";
+            Console.WriteLine("Running query: {0}\n", sqlQueryText);
+
+            QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
+            FeedIterator<Sensores> queryResultSetIterator = this.container.GetItemQueryIterator<Sensores>(queryDefinition);
+
+            List<Sensores> sensores = new List<Sensores>();
+
+            while (queryResultSetIterator.HasMoreResults)
+            {
+                FeedResponse<Sensores> currentResultSet = await queryResultSetIterator.ReadNextAsync();
+                foreach (Sensores item in currentResultSet)
+                {
+                    sensores.Add(item);
+                    Console.WriteLine("\tRead {0}\n", item);
+                }
+            }
+            return sensores.ToArray();
         }
 
         public async Task GetStartedDemoAsync()

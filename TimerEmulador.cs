@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.SignalRService;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Company.Function
 {
@@ -63,7 +62,40 @@ namespace Company.Function
 
             return new ContentResult
             {
-                Content = JsonConvert.SerializeObject(result, new IsoDateTimeConverter() { DateTimeFormat = "MM/dd/yy HH:mm:ss" }),
+                Content = JsonConvert.SerializeObject(result),
+                ContentType = "application/json",
+            };
+        }
+
+        [FunctionName("consultasensores")]
+        public static async Task<IActionResult> consultasensores([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
+        {
+            string sensor = req.Query["sensor"];
+            string variable = req.Query["variable"];
+            string inittime = req.Query["inittime"];
+            string endtime = req.Query["endtime"];
+
+            Sensores[] result = new Sensores[0];
+            try
+            {
+                Program programDb = new Program();
+                await programDb.GetStartedDemoAsync();
+                result = await programDb.QueryItemsSensoresAsync(sensor, variable, inittime, endtime);
+
+            }
+            catch (CosmosException de)
+            {
+                Exception baseException = de.GetBaseException();
+                Console.WriteLine("{0} error occurred: {1}", de.StatusCode, de);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error: {0}", e);
+            }
+
+            return new ContentResult
+            {
+                Content = JsonConvert.SerializeObject(result),
                 ContentType = "application/json",
             };
         }
@@ -71,7 +103,7 @@ namespace Company.Function
         [FunctionName("stop")]
         public static async Task<IActionResult> stop([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
         {
-            
+
             swSingalR = false;
             swDB = false;
             return new ContentResult
@@ -84,7 +116,7 @@ namespace Company.Function
         [FunctionName("start")]
         public static async Task<IActionResult> start([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
         {
-            
+
             swSingalR = true;
             swDB = true;
             return new ContentResult
@@ -97,7 +129,7 @@ namespace Company.Function
         [FunctionName("startDB")]
         public static async Task<IActionResult> startDB([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
         {
-            
+
             swDB = true;
             return new ContentResult
             {
@@ -109,7 +141,7 @@ namespace Company.Function
         [FunctionName("startsignalr")]
         public static async Task<IActionResult> startSignalr([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
         {
-            
+
             swSingalR = true;
             return new ContentResult
             {
@@ -121,7 +153,7 @@ namespace Company.Function
         [FunctionName("stopDB")]
         public static async Task<IActionResult> stopDB([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
         {
-            
+
             swDB = false;
             return new ContentResult
             {
@@ -133,7 +165,7 @@ namespace Company.Function
         [FunctionName("stopsignalr")]
         public static async Task<IActionResult> stopsignalr([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
         {
-            
+
             swSingalR = false;
             return new ContentResult
             {
@@ -159,8 +191,7 @@ namespace Company.Function
             // */5 * * * * * cada 5 segundos
             // 0 */5 * * * * cada 5 min
 
-            int id = new Random().Next(50, 100);
-
+            var id = Guid.NewGuid();
             int precipitacion1 = new Random().Next(50, 100);
             int temperatura1 = new Random().Next(0, 50);
             int humendad1 = new Random().Next(0, 50);
@@ -197,41 +228,86 @@ namespace Company.Function
                 siata = new Siata
                 {
                     sensores = new Sensores[]{
-                        new Sensores { nombre="Sensor1",precipitacion = precipitacion1, precipitaciontime = DateTime.Now.AddHours(-precipitacion1), temperatura = temperatura1, temperaturatime= DateTime.Now.AddHours(-temperatura1), humedad = humendad1, humedadtime = DateTime.Now.AddHours(-humendad1)},
-                        new Sensores { nombre="Sensor2",precipitacion = precipitacion2, precipitaciontime = DateTime.Now.AddHours(-precipitacion2), temperatura = temperatura2, temperaturatime= DateTime.Now.AddHours(-temperatura2), humedad = humendad2, humedadtime = DateTime.Now.AddHours(-humendad2)},
-                        new Sensores { nombre="Sensor3",precipitacion = precipitacion3, precipitaciontime = DateTime.Now.AddHours(-precipitacion3), temperatura = temperatura3, temperaturatime= DateTime.Now.AddHours(-temperatura3), humedad = humendad3, humedadtime = DateTime.Now.AddHours(-humendad3)},
+                        new Sensores {
+                            id = "0101010101010",
+                            nombre="Sensor #1",
+                            estado = true,
+                            ubicacion = "boqueron",
+                            idPrecipitacion = 12,
+                            precipitacion = precipitacion1,
+                            precipitaciontime = DateTime.UtcNow,
+                            idTemperatura = 12,
+                            temperatura = temperatura1,
+                            temperaturatime= DateTime.UtcNow,
+                            idHumedad = 15,
+                            humedad = humendad1,
+                            humedadtime = DateTime.UtcNow,
+                            fechaActualizacion = DateTime.UtcNow
+                        },
+                        new Sensores {
+                            id = "0202020202020",
+                            nombre="Sensor #2",
+                            estado = true,
+                            ubicacion = "San José",
+                            idPrecipitacion = 12,
+                            precipitacion = precipitacion2,
+                            precipitaciontime = DateTime.UtcNow,
+                            idTemperatura = 12,
+                            temperatura = temperatura2,
+                            temperaturatime= DateTime.UtcNow,
+                            idHumedad = 15,
+                            humedad = humendad3,
+                            humedadtime = DateTime.UtcNow,
+                            fechaActualizacion = DateTime.UtcNow
+                        },
+                        new Sensores {
+                            id = "03030303030303",
+                            nombre="Sensor #3",
+                            estado = true,
+                            ubicacion = "Otra ubicación",
+                            idPrecipitacion = 12,
+                            precipitacion = precipitacion3,
+                            precipitaciontime = DateTime.UtcNow,
+                            idTemperatura = 12,
+                            temperatura = temperatura3,
+                            temperaturatime= DateTime.UtcNow,
+                            idHumedad = 15,
+                            humedad = humendad3,
+                            humedadtime = DateTime.UtcNow,
+                            fechaActualizacion = DateTime.UtcNow
+                        },
                     }
                 },
                 aguaNatural = new AguaNatural
                 {
                     turbiedadentrada = vcturbiedadentrada,
-                    turbiedadentradatime = DateTime.Now.AddHours(-vcturbiedadentrada),
+                    turbiedadentradatime = DateTime.UtcNow,
                     caudalentrada = vcconductividad,
-                    conductividadtime = DateTime.Now.AddHours(-vcconductividad),
+                    conductividadtime = DateTime.UtcNow,
                     ph = vcph,
-                    phtime = DateTime.Now.AddHours(-vcph),
+                    phtime = DateTime.UtcNow,
                     presion = vcpresion,
-                    presiontime = DateTime.Now.AddHours(-vcpresion),
+                    presiontime = DateTime.UtcNow,
                     color = vccolor,
-                    colortime = DateTime.Now.AddHours(-vccolor)
+                    colortime = DateTime.UtcNow
                 },
                 aguaPotable = new AguaPotable
                 {
                     turbiedadsalida = apturbiedadsalida,
-                    turbiedadsalidatime = DateTime.Now.AddHours(-apturbiedadsalida),
+                    turbiedadsalidatime = DateTime.UtcNow,
                     caudalsalida = apcaudalsalida,
-                    caudalsalidatime = DateTime.Now.AddHours(-apcaudalsalida),
+                    caudalsalidatime = DateTime.UtcNow,
                     niveltanques = apniveltanques,
-                    niveltanquestime = DateTime.Now.AddHours(-apniveltanques),
+                    niveltanquestime = DateTime.UtcNow,
                     color = apcolor,
-                    colortime = DateTime.Now.AddHours(-apcolor)
+                    colortime = DateTime.UtcNow
                 },
                 nivelesCoagulacion = new NivelesCoagulacion
                 {
                     actual = ncactual,
-                    actualtime = DateTime.Now.AddHours(-ncactual),
+                    actualtime = DateTime.UtcNow,
                     recomendado = ncrecomendado,
-                    recomendadotime = DateTime.Now.AddHours(-ncrecomendado)
+                    recomendadotime = DateTime.UtcNow
                 },
                 Partition = "potabilizacion123"
             };
@@ -263,8 +339,6 @@ namespace Company.Function
                 Console.WriteLine("Error: {0}", e);
                 mensaje.IsRegistered = false;
             }
-
-            String valor = mensaje.ToString();
             if (swSingalR)
             {
                 await signalRMessages.AddAsync(
@@ -272,7 +346,7 @@ namespace Company.Function
                     {
                         Target = "newMessage",
                         Arguments = new[] {
-                        valor
+                        JsonConvert.SerializeObject(mensaje)
                         }
                     });
             }
