@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Collections.Generic;
 using System.Net;
 using Microsoft.Azure.Cosmos;
+using System.Linq;
 
 namespace Company.Function
 {
@@ -12,11 +13,11 @@ namespace Company.Function
 
         /// The Azure Cosmos DB endpoint for running this GetStarted sample.
         //private string EndpointUrl = Environment.GetEnvironmentVariable("EndpointUrl");
-        private string EndpointUrl = "https://emuladorpotapicosmosdb.documents.azure.com:443/";//Environment.GetEnvironmentVariable("EndpointUrl");
+        private string EndpointUrl = "https://emuladorapicosmosdb.documents.azure.com:443/";//Environment.GetEnvironmentVariable("EndpointUrl");
 
         /// The primary key for the Azure DocumentDB account.
         //private string PrimaryKey = Environment.GetEnvironmentVariable("PrimaryKey");
-        private string PrimaryKey = "TC3K9slCkvF6uUe42P4CyuCU41w4VWIifKHOBCv69Dst32LFy4rYBY33B6uUARiut1FyxsisvNtmgYn1eYV7SQ==";//Environment.GetEnvironmentVariable("PrimaryKey");
+        private string PrimaryKey = "shs6huBjg4uORDHyx6c5qv0gphxF5XmZ6DKW4hm9caeBZSobmyiij4xRD8p6Yj5FZxmjDbr9hx9f9ripDtehOg==";//Environment.GetEnvironmentVariable("PrimaryKey");
 
         // The Cosmos client instance
         private CosmosClient cosmosClient;
@@ -61,24 +62,22 @@ namespace Company.Function
 
         public async Task<Mensaje[]> QueryItemsAsync(string variable, string inittime, string endtime)
         {
-            //var sqlQueryText = "SELECT * FROM c WHERE c." + variable + "time between inittime and endtime";
             var sqlQueryText = "SELECT * FROM c WHERE c." + variable + " >= '" + inittime + "' and c." + variable + " <= '" + endtime + "'";
-            Console.WriteLine("Running query: {0}\n", sqlQueryText);
 
             QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
             FeedIterator<Mensaje> queryResultSetIterator = this.container.GetItemQueryIterator<Mensaje>(queryDefinition);
 
             List<Mensaje> mensajes = new List<Mensaje>();
+            List<Mensaje> resp = new List<Mensaje>();
+
 
             while (queryResultSetIterator.HasMoreResults)
             {
-                FeedResponse<Mensaje> currentResultSet = await queryResultSetIterator.ReadNextAsync();
-                foreach (Mensaje mensaje in currentResultSet)
-                {
-                    mensajes.Add(mensaje);
-                    Console.WriteLine("\tRead {0}\n", mensaje);
-                }
+                resp.AddRange(queryResultSetIterator.ReadNextAsync().Result.ToList());
             }
+            mensajes.AddRange(from mensaje in resp.Select((value, index) => new { value, index })
+                              where (mensaje.index + 1) % Convert.ToInt32(resp.Count / 100) == 0
+                              select mensaje.value);
             return mensajes.ToArray();
         }
 

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.SignalRService;
 using Newtonsoft.Json;
+using System.Net.Http.Headers;
 
 namespace Company.Function
 {
@@ -192,35 +193,48 @@ namespace Company.Function
             // 0 */5 * * * * cada 5 min
 
             var id = Guid.NewGuid();
-            int precipitacion1 = new Random().Next(50, 100);
-            int temperatura1 = new Random().Next(0, 50);
-            int humendad1 = new Random().Next(0, 50);
+            int precipitacion1 = new Random().Next(15, 20);
+            int temperatura1 = new Random().Next(80, 85);
+            int humendad1 = new Random().Next(0, 10);
 
-            int precipitacion2 = new Random().Next(50, 100);
-            int temperatura2 = new Random().Next(0, 50);
-            int humendad2 = new Random().Next(0, 50);
+            int precipitacion2 = new Random().Next(25, 35);
+            int temperatura2 = new Random().Next(15, 25);
+            int humendad2 = new Random().Next(5, 15);
 
-            int precipitacion3 = new Random().Next(50, 100);
-            int temperatura3 = new Random().Next(0, 50);
-            int humendad3 = new Random().Next(0, 50);
+            int precipitacion3 = new Random().Next(35, 45);
+            int temperatura3 = new Random().Next(25, 35);
+            int humendad3 = new Random().Next(10, 20);
 
-            int vcturbiedadentrada = new Random().Next(0, 50);
+            int vcturbiedadentrada = new Random().Next(0, 5);
             int vccaudalentrada = new Random().Next(0, 50);
-            int vcconductividad = new Random().Next(0, 50);
-            int vcph = new Random().Next(0, 50);
-            int vcpresion = new Random().Next(0, 50);
-            int vccolor = new Random().Next(0, 50);
+            int vcconductividad = new Random().Next(0, 5);
+            int vcph = new Random().Next(5, 10);
+            int vcpresion = new Random().Next(100, 700);
+            int vccolor = new Random().Next(0, 5);
 
             int coagulantenivelacutal = new Random().Next(0, 50);
             int coagulantenivelrecomendado = new Random().Next(0, 50);
 
-            int apturbiedadsalida = new Random().Next(0, 50);
+            int apturbiedadsalida = new Random().Next(0, 5);
             int apcolor = new Random().Next(0, 50);
             int apcaudalsalida = new Random().Next(0, 50);
-            int apniveltanques = new Random().Next(0, 50);
+            int apniveltanques = new Random().Next(150, 550);
 
             int ncactual = new Random().Next(0, 100);
-            int ncrecomendado = new Random().Next(0, 100);
+
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Environment.GetEnvironmentVariable("AccessToken"));
+            var ncrecomendado = JsonConvert.DeserializeObject<decimal[]>(client.PostAsJsonAsync(@"http://coagulante-svc.eastus2.azurecontainer.io/score", new ConsultaIA { 
+                Año = DateTime.UtcNow.Year,
+                Mes = DateTime.UtcNow.Month,
+                Hora = DateTime.UtcNow.Hour,
+                Turbieda = (decimal)vcturbiedadentrada,
+                Conductividad = (decimal)vcconductividad,
+                Ph = (decimal)vcph,
+                Color = (decimal)vccolor,    
+                Caudal = (decimal)vccaudalentrada,
+             }).Result.Content.ReadAsStringAsync().Result)[0];
 
             Mensaje mensaje = new Mensaje
             {
@@ -256,7 +270,7 @@ namespace Company.Function
                             temperatura = temperatura2,
                             temperaturatime= DateTime.UtcNow,
                             idHumedad = 15,
-                            humedad = humendad3,
+                            humedad = humendad2,
                             humedadtime = DateTime.UtcNow,
                             fechaActualizacion = DateTime.UtcNow
                         },
@@ -282,7 +296,8 @@ namespace Company.Function
                 {
                     turbiedadentrada = vcturbiedadentrada,
                     turbiedadentradatime = DateTime.UtcNow,
-                    caudalentrada = vcconductividad,
+                    caudalentrada = vccaudalentrada,
+                    conductividad = vcconductividad,
                     conductividadtime = DateTime.UtcNow,
                     ph = vcph,
                     phtime = DateTime.UtcNow,
@@ -306,7 +321,7 @@ namespace Company.Function
                 {
                     actual = ncactual,
                     actualtime = DateTime.UtcNow,
-                    recomendado = ncrecomendado,
+                    recomendado = decimal.Round(ncrecomendado,2),
                     recomendadotime = DateTime.UtcNow
                 },
                 Partition = "potabilizacion123"
