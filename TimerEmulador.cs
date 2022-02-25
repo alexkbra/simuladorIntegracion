@@ -222,19 +222,7 @@ namespace Company.Function
 
             int ncactual = new Random().Next(0, 100);
 
-            HttpClient client = new HttpClient();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Environment.GetEnvironmentVariable("AccessToken"));
-            var ncrecomendado = JsonConvert.DeserializeObject<decimal[]>(client.PostAsJsonAsync(@"http://coagulante-svc.eastus2.azurecontainer.io/score", new ConsultaIA { 
-                Año = DateTime.UtcNow.Year,
-                Mes = DateTime.UtcNow.Month,
-                Hora = DateTime.UtcNow.Hour,
-                Turbieda = (decimal)vcturbiedadentrada,
-                Conductividad = (decimal)vcconductividad,
-                Ph = (decimal)vcph,
-                Color = (decimal)vccolor,    
-                Caudal = (decimal)vccaudalentrada,
-             }).Result.Content.ReadAsStringAsync().Result)[0];
+            var ncrecomendado = nivelCoagulante(vcturbiedadentrada, vcconductividad, vcph, vccolor, vccaudalentrada);
 
             Mensaje mensaje = new Mensaje
             {
@@ -370,6 +358,47 @@ namespace Company.Function
                 Console.WriteLine("ya no publica");
             }
         }
+
+        [FunctionName("consultaNivelCoagulante")]
+        public static async Task<IActionResult> consultaNivelCoagulante(
+            [HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
+        {
+            var turbiedad = decimal.Parse(req.Query["turbiedad"]);
+            var conductividad = decimal.Parse(req.Query["conductividad"]);
+            var ph = decimal.Parse(req.Query["ph"]);
+            var color = decimal.Parse(req.Query["color"]);
+            var caudal = decimal.Parse(req.Query["caudal"]);
+
+            var nivelCoagulante = nivelCoagulante(turbiedad, conductividad, ph, color, caudal);
+
+            return new ContentResult
+            {
+                Content = JsonConvert.SerializeObject(nivelCoagulante),
+                ContentType = "application/json",
+            };
+        }
+
+        public static decimal nivelCoagulante(decimal vcturbiedadentrada, decimal vcconductividad,
+            decimal vcph, decimal vccolor, decimal vccaudalentrada)
+        {
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Environment.GetEnvironmentVariable("AccessToken"));
+            var ncrecomendado = JsonConvert.DeserializeObject<decimal[]>(client.PostAsJsonAsync(@"http://coagulante-svc.eastus2.azurecontainer.io/score", new ConsultaIA
+            {
+                Año = DateTime.UtcNow.Year,
+                Mes = DateTime.UtcNow.Month,
+                Hora = DateTime.UtcNow.Hour,
+                Turbieda = vcturbiedadentrada,
+                Conductividad = vcconductividad,
+                Ph = vcph,
+                Color = vccolor,
+                Caudal = vccaudalentrada,
+            }).Result.Content.ReadAsStringAsync().Result)[0];
+
+            return ncrecomendado;
+        }
+
         private class GitResult
         {
             [JsonRequired]
