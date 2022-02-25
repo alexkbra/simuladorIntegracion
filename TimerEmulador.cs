@@ -369,11 +369,11 @@ namespace Company.Function
             var color = decimal.Parse(req.Query["color"]);
             var caudal = decimal.Parse(req.Query["caudal"]);
 
-            var nivelCoagulante = nivelCoagulante(turbiedad, conductividad, ph, color, caudal);
+            var nivelCoagulanteResponse = nivelCoagulante(turbiedad, conductividad, ph, color, caudal);
 
             return new ContentResult
             {
-                Content = JsonConvert.SerializeObject(nivelCoagulante),
+                Content = JsonConvert.SerializeObject(nivelCoagulanteResponse),
                 ContentType = "application/json",
             };
         }
