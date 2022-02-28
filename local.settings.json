@@ -3,7 +3,7 @@
   "Values": {
     "AzureWebJobsStorage": "DefaultEndpointsProtocol=https;AccountName=storageaccountintega114;AccountKey=9OasiEeWd8H34MNzhdS9yCeTiaWhpTM4s80seA3smK7HzdShZo0PnMBS6HVCCk2vVvTnyHcJ9ZEJBM+pl+2Wdw==;EndpointSuffix=core.windows.net",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet",
-    "AzureSignalRConnectionString": "Endpoint=https://emuladorepm.service.signalr.net;AccessKey=PBS4lNRdakSM3ycPeIo/GgDNmb27twdxaHBlNybFCmA=;Version=1.0;",
+    "AzureSignalRConnectionString": "Endpoint=https://siganrlemuladorepm.service.signalr.net;AccessKey=xT1PEGHWG2NxSPVXLxnPLN/GfNIdSLAGjXL+D1eG234=;Version=1.0;",
     "AccessToken": "02ACMjwVf9e95PEZCbcIZaaOtcTGcyMt"
   },
   "ConnectionStrings": {}

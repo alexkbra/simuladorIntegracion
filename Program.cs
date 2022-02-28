@@ -36,14 +36,12 @@ namespace Company.Function
         {
             // Create a new database
             this.database = await this.cosmosClient.CreateDatabaseIfNotExistsAsync(databaseId);
-            Console.WriteLine("Created Database: {0}\n", this.database.Id);
         }
 
         public async Task CreateContainerAsync()
         {
             // Create a new container
             this.container = await this.database.CreateContainerIfNotExistsAsync(containerId, "/id");
-            Console.WriteLine("Created Container: {0}\n", this.container.Id);
         }
 
         public async Task AddItemsToContainerAsync(Mensaje mensaje)
@@ -52,7 +50,6 @@ namespace Company.Function
             try
             {
                 ItemResponse<Mensaje> mensajeResponse = await this.container.CreateItemAsync<Mensaje>(mensaje, new PartitionKey(mensaje.Id));
-                Console.WriteLine("Created item in database with id: {0} Operation consumed {1} RUs.\n", mensajeResponse.Resource.Id, mensajeResponse.RequestCharge);
             }
             catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.Conflict)
             {
@@ -81,26 +78,67 @@ namespace Company.Function
             return mensajes.ToArray();
         }
 
-        public async Task<Sensores[]> QueryItemsSensoresAsync(string sensor, string variable, string inittime, string endtime)
+        public async Task<HistoricoCaogulante[]> QueryItemsHistoricoAsync(string variable, string inittime, string endtime)
         {
-            var sqlQueryText = $"SELECT * from c.{sensor} AS Sensores WHERE Sensores.{variable} >= '{inittime}' and Sensores.{variable} <= '{endtime}'";
-            Console.WriteLine("Running query: {0}\n", sqlQueryText);
+            var sqlQueryText = "SELECT * FROM c WHERE c." + variable + " >= '" + inittime + "' and c." + variable + " <= '" + endtime + "'";
 
             QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
-            FeedIterator<Sensores> queryResultSetIterator = this.container.GetItemQueryIterator<Sensores>(queryDefinition);
+            FeedIterator<Mensaje> queryResultSetIterator = this.container.GetItemQueryIterator<Mensaje>(queryDefinition);
 
-            List<Sensores> sensores = new List<Sensores>();
+            List<HistoricoCaogulante> historico = new List<HistoricoCaogulante>();
+            List<Mensaje> resp = new List<Mensaje>();
+
 
             while (queryResultSetIterator.HasMoreResults)
             {
-                FeedResponse<Sensores> currentResultSet = await queryResultSetIterator.ReadNextAsync();
-                foreach (Sensores item in currentResultSet)
-                {
-                    sensores.Add(item);
-                    Console.WriteLine("\tRead {0}\n", item);
-                }
+                resp.AddRange(queryResultSetIterator.ReadNextAsync().Result.ToList());
             }
-            return sensores.ToArray();
+
+            var diaInicial = DateTime.Parse(inittime);
+            var diaFinal = DateTime.Parse(endtime);
+            var cantidadDias = (diaFinal - diaInicial).TotalDays;
+
+            for (int dia = 0; dia < cantidadDias; dia++)
+            {
+                var cantidadDatos = resp.Where(x => x.aguaNatural.turbiedadentradatime.ToString("yyyy-MM-dd") == diaInicial.AddDays(dia).ToString("yyyy-MM-dd")).ToList();
+
+                var promturbiedadentrada = (int)(cantidadDatos.Select(x => x.aguaNatural.turbiedadentrada).Average());
+                var promcaudalentrada = (int)(cantidadDatos.Select(x => x.aguaNatural.caudalentrada).Average());
+                var promconductividad = (int)(cantidadDatos.Select(x => x.aguaNatural.conductividad).Average());
+                var promph = (int)(cantidadDatos.Select(x => x.aguaNatural.ph).Average());
+                var prompresion = (int)(cantidadDatos.Select(x => x.aguaNatural.presion).Average());
+                var promcolor = (int)(cantidadDatos.Select(x => x.aguaNatural.color).Average());
+                var promturbiedadsalida = (int)(cantidadDatos.Select(x => x.aguaPotable.turbiedadsalida).Average());
+                var promcaudalsalida = (int)(cantidadDatos.Select(x => x.aguaPotable.caudalsalida).Average());
+                var promniveltanques = (int)(cantidadDatos.Select(x => x.aguaPotable.niveltanques).Average());
+                var promcolorpotable = (int)(cantidadDatos.Select(x => x.aguaPotable.color).Average());
+
+                var historicoDia = new HistoricoCaogulante();
+                historicoDia.AguaNatural.turbiedadentrada = promturbiedadsalida;
+                historicoDia.AguaNatural.turbiedadentradatime = diaInicial.AddDays(dia);
+                historicoDia.AguaNatural.caudalentrada = promcaudalentrada;
+                historicoDia.AguaNatural.caudalentradatime = diaInicial.AddDays(dia);
+                historicoDia.AguaNatural.conductividad = promconductividad;
+                historicoDia.AguaNatural.conductividadtime = diaInicial.AddDays(dia);
+                historicoDia.AguaNatural.ph = promph;
+                historicoDia.AguaNatural.phtime = diaInicial.AddDays(dia);
+                historicoDia.AguaNatural.presion = prompresion;
+                historicoDia.AguaNatural.presiontime = diaInicial.AddDays(dia);
+                historicoDia.AguaNatural.color = promcolor;
+                historicoDia.AguaNatural.colortime = diaInicial.AddDays(dia);
+
+                historicoDia.AguaPotable.turbiedadsalida = promturbiedadsalida;
+                historicoDia.AguaPotable.turbiedadsalidatime = diaInicial.AddDays(dia);
+                historicoDia.AguaPotable.caudalsalida = promcaudalsalida;
+                historicoDia.AguaPotable.caudalsalidatime = diaInicial.AddDays(dia);
+                historicoDia.AguaPotable.niveltanques = promniveltanques;
+                historicoDia.AguaPotable.niveltanquestime = diaInicial.AddDays(dia);
+                historicoDia.AguaPotable.color = promcolorpotable;
+                historicoDia.AguaPotable.colortime = diaInicial.AddDays(dia);
+
+                historico.Add(historicoDia);
+            }
+            return historico.ToArray();
         }
 
         public async Task GetStartedDemoAsync()

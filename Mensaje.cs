@@ -46,6 +46,13 @@ namespace Company.Function
         public DateTime fechaActualizacion { get; set; }
     }
 
+    public class HistoricoCaogulante
+    {
+        public AguaNatural AguaNatural { get; set; } = new AguaNatural();
+        public AguaPotable AguaPotable { get; set; } = new AguaPotable();
+    }
+
+
     public class AguaNatural
     {
         public int turbiedadentrada { get; set; }

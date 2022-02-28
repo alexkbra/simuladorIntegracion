@@ -68,39 +68,6 @@ namespace Company.Function
             };
         }
 
-        [FunctionName("consultasensores")]
-        public static async Task<IActionResult> consultasensores([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
-        {
-            string sensor = req.Query["sensor"];
-            string variable = req.Query["variable"];
-            string inittime = req.Query["inittime"];
-            string endtime = req.Query["endtime"];
-
-            Sensores[] result = new Sensores[0];
-            try
-            {
-                Program programDb = new Program();
-                await programDb.GetStartedDemoAsync();
-                result = await programDb.QueryItemsSensoresAsync(sensor, variable, inittime, endtime);
-
-            }
-            catch (CosmosException de)
-            {
-                Exception baseException = de.GetBaseException();
-                Console.WriteLine("{0} error occurred: {1}", de.StatusCode, de);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error: {0}", e);
-            }
-
-            return new ContentResult
-            {
-                Content = JsonConvert.SerializeObject(result),
-                ContentType = "application/json",
-            };
-        }
-
         [FunctionName("stop")]
         public static async Task<IActionResult> stop([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
         {
@@ -309,7 +276,7 @@ namespace Company.Function
                 {
                     actual = ncactual,
                     actualtime = DateTime.UtcNow,
-                    recomendado = decimal.Round(ncrecomendado,2),
+                    recomendado = decimal.Round(ncrecomendado, 2),
                     recomendadotime = DateTime.UtcNow
                 },
                 Partition = "potabilizacion123"
@@ -397,6 +364,39 @@ namespace Company.Function
             }).Result.Content.ReadAsStringAsync().Result)[0];
 
             return ncrecomendado;
+        }
+
+
+        [FunctionName("consultaHistoricoCoagulante")]
+        public static async Task<IActionResult> consultaHistoricoCoagulante([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
+        
+        {
+            string variable = req.Query["variable"];
+            string inittime = req.Query["inittime"];
+            string endtime = req.Query["endtime"];
+
+            HistoricoCaogulante[] result = new HistoricoCaogulante[0];
+            try
+            {
+                Program programDb = new Program();
+                await programDb.GetStartedDemoAsync();
+                result = await programDb.QueryItemsHistoricoAsync(variable, inittime, endtime);
+
+            }
+            catch (CosmosException de)
+            {
+                Exception baseException = de.GetBaseException();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error: {0}", e);
+            }
+
+            return new ContentResult
+            {
+                Content = JsonConvert.SerializeObject(result),
+                ContentType = "application/json",
+            };
         }
 
         private class GitResult
