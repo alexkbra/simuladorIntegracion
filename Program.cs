@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.Net;
 using Microsoft.Azure.Cosmos;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using Newtonsoft.Json;
 
 namespace Company.Function
 {
@@ -97,48 +100,70 @@ namespace Company.Function
             var diaInicial = DateTime.Parse(inittime);
             var diaFinal = DateTime.Parse(endtime);
             var cantidadDias = (diaFinal - diaInicial).TotalDays;
-
+            
             for (int dia = 0; dia < cantidadDias; dia++)
             {
                 var cantidadDatos = resp.Where(x => x.aguaNatural.turbiedadentradatime.ToString("yyyy-MM-dd") == diaInicial.AddDays(dia).ToString("yyyy-MM-dd")).ToList();
 
-                var promturbiedadentrada = (int)(cantidadDatos.Select(x => x.aguaNatural.turbiedadentrada).Average());
-                var promcaudalentrada = (int)(cantidadDatos.Select(x => x.aguaNatural.caudalentrada).Average());
-                var promconductividad = (int)(cantidadDatos.Select(x => x.aguaNatural.conductividad).Average());
-                var promph = (int)(cantidadDatos.Select(x => x.aguaNatural.ph).Average());
-                var prompresion = (int)(cantidadDatos.Select(x => x.aguaNatural.presion).Average());
-                var promcolor = (int)(cantidadDatos.Select(x => x.aguaNatural.color).Average());
-                var promturbiedadsalida = (int)(cantidadDatos.Select(x => x.aguaPotable.turbiedadsalida).Average());
-                var promcaudalsalida = (int)(cantidadDatos.Select(x => x.aguaPotable.caudalsalida).Average());
-                var promniveltanques = (int)(cantidadDatos.Select(x => x.aguaPotable.niveltanques).Average());
-                var promcolorpotable = (int)(cantidadDatos.Select(x => x.aguaPotable.color).Average());
+                var promturbiedadentrada = (decimal)(cantidadDatos.Select(x => x.aguaNatural.turbiedadentrada).Average());
+                var promcaudalentrada = (decimal)(cantidadDatos.Select(x => x.aguaNatural.caudalentrada).Average());
+                var promconductividad = (decimal)(cantidadDatos.Select(x => x.aguaNatural.conductividad).Average());
+                var promph = (decimal)(cantidadDatos.Select(x => x.aguaNatural.ph).Average());
+                var prompresion = (decimal)(cantidadDatos.Select(x => x.aguaNatural.presion).Average());
+                var promcolor = (decimal)(cantidadDatos.Select(x => x.aguaNatural.color).Average());
+                var promturbiedadsalida = (decimal)(cantidadDatos.Select(x => x.aguaPotable.turbiedadsalida).Average());
+                var promcaudalsalida = (decimal)(cantidadDatos.Select(x => x.aguaPotable.caudalsalida).Average());
+                var promniveltanques = (decimal)(cantidadDatos.Select(x => x.aguaPotable.niveltanques).Average());
+                var promcolorpotable = (decimal)(cantidadDatos.Select(x => x.aguaPotable.color).Average());
 
                 var historicoDia = new HistoricoCaogulante();
-                historicoDia.AguaNatural.turbiedadentrada = promturbiedadsalida;
+                historicoDia.recomendado = nivelCoagulante(promturbiedadsalida, promconductividad, promph, promcolor, promcaudalentrada);
+                historicoDia.AguaNatural.turbiedadentrada = (int)promturbiedadsalida;
                 historicoDia.AguaNatural.turbiedadentradatime = diaInicial.AddDays(dia);
-                historicoDia.AguaNatural.caudalentrada = promcaudalentrada;
+                historicoDia.AguaNatural.caudalentrada = (int)promcaudalentrada;
                 historicoDia.AguaNatural.caudalentradatime = diaInicial.AddDays(dia);
-                historicoDia.AguaNatural.conductividad = promconductividad;
+                historicoDia.AguaNatural.conductividad = (int)promconductividad;
                 historicoDia.AguaNatural.conductividadtime = diaInicial.AddDays(dia);
-                historicoDia.AguaNatural.ph = promph;
+                historicoDia.AguaNatural.ph = (int)promph;
                 historicoDia.AguaNatural.phtime = diaInicial.AddDays(dia);
-                historicoDia.AguaNatural.presion = prompresion;
+                historicoDia.AguaNatural.presion = (int)prompresion;
                 historicoDia.AguaNatural.presiontime = diaInicial.AddDays(dia);
-                historicoDia.AguaNatural.color = promcolor;
+                historicoDia.AguaNatural.color = (int)promcolor;
                 historicoDia.AguaNatural.colortime = diaInicial.AddDays(dia);
 
-                historicoDia.AguaPotable.turbiedadsalida = promturbiedadsalida;
+                historicoDia.AguaPotable.turbiedadsalida = (int)promturbiedadsalida;
                 historicoDia.AguaPotable.turbiedadsalidatime = diaInicial.AddDays(dia);
-                historicoDia.AguaPotable.caudalsalida = promcaudalsalida;
+                historicoDia.AguaPotable.caudalsalida = (int)promcaudalsalida;
                 historicoDia.AguaPotable.caudalsalidatime = diaInicial.AddDays(dia);
-                historicoDia.AguaPotable.niveltanques = promniveltanques;
+                historicoDia.AguaPotable.niveltanques = (int)promniveltanques;
                 historicoDia.AguaPotable.niveltanquestime = diaInicial.AddDays(dia);
-                historicoDia.AguaPotable.color = promcolorpotable;
+                historicoDia.AguaPotable.color = (int)promcolorpotable;
                 historicoDia.AguaPotable.colortime = diaInicial.AddDays(dia);
 
                 historico.Add(historicoDia);
             }
             return historico.ToArray();
+        }
+
+           public decimal nivelCoagulante(decimal vcturbiedadentrada, decimal vcconductividad,
+            decimal vcph, decimal vccolor, decimal vccaudalentrada)
+        {
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Environment.GetEnvironmentVariable("AccessToken"));
+            var ncrecomendado = JsonConvert.DeserializeObject<decimal[]>(client.PostAsJsonAsync(@"http://coagulante-svc.eastus2.azurecontainer.io/score", new ConsultaIA
+            {
+                Año = DateTime.UtcNow.Year,
+                Mes = DateTime.UtcNow.Month,
+                Hora = DateTime.UtcNow.Hour,
+                Turbieda = vcturbiedadentrada,
+                Conductividad = vcconductividad,
+                Ph = vcph,
+                Color = vccolor,
+                Caudal = vccaudalentrada,
+            }).Result.Content.ReadAsStringAsync().Result)[0];
+
+            return ncrecomendado;
         }
 
         public async Task GetStartedDemoAsync()

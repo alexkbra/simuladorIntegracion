@@ -189,7 +189,9 @@ namespace Company.Function
 
             int ncactual = new Random().Next(0, 100);
 
-            var ncrecomendado = nivelCoagulante(vcturbiedadentrada, vcconductividad, vcph, vccolor, vccaudalentrada);
+            var program = new Program();
+
+            var ncrecomendado = program.nivelCoagulante(vcturbiedadentrada, vcconductividad, vcph, vccolor, vccaudalentrada);
 
             Mensaje mensaje = new Mensaje
             {
@@ -276,7 +278,7 @@ namespace Company.Function
                 {
                     actual = ncactual,
                     actualtime = DateTime.UtcNow,
-                    recomendado = decimal.Round(ncrecomendado, 2),
+                    recomendado = decimal.Round(ncrecomendado, 1),
                     recomendadotime = DateTime.UtcNow
                 },
                 Partition = "potabilizacion123"
@@ -335,36 +337,18 @@ namespace Company.Function
             var ph = decimal.Parse(req.Query["ph"]);
             var color = decimal.Parse(req.Query["color"]);
             var caudal = decimal.Parse(req.Query["caudal"]);
+            var program = new Program();
 
-            var nivelCoagulanteResponse = nivelCoagulante(turbiedad, conductividad, ph, color, caudal);
+            var nivelCoagulanteResponse = program.nivelCoagulante(turbiedad, conductividad, ph, color, caudal);
 
             return new ContentResult
             {
-                Content = JsonConvert.SerializeObject(nivelCoagulanteResponse),
+                Content = JsonConvert.SerializeObject(decimal.Round(nivelCoagulanteResponse, 1)),
                 ContentType = "application/json",
             };
         }
 
-        public static decimal nivelCoagulante(decimal vcturbiedadentrada, decimal vcconductividad,
-            decimal vcph, decimal vccolor, decimal vccaudalentrada)
-        {
-            HttpClient client = new HttpClient();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Environment.GetEnvironmentVariable("AccessToken"));
-            var ncrecomendado = JsonConvert.DeserializeObject<decimal[]>(client.PostAsJsonAsync(@"http://coagulante-svc.eastus2.azurecontainer.io/score", new ConsultaIA
-            {
-                Año = DateTime.UtcNow.Year,
-                Mes = DateTime.UtcNow.Month,
-                Hora = DateTime.UtcNow.Hour,
-                Turbieda = vcturbiedadentrada,
-                Conductividad = vcconductividad,
-                Ph = vcph,
-                Color = vccolor,
-                Caudal = vccaudalentrada,
-            }).Result.Content.ReadAsStringAsync().Result)[0];
-
-            return ncrecomendado;
-        }
+     
 
 
         [FunctionName("consultaHistoricoCoagulante")]
