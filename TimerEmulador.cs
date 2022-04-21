@@ -13,6 +13,8 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.SignalRService;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
+using signalre.Entities;
+using signalre;
 
 namespace Company.Function
 {
@@ -261,7 +263,8 @@ namespace Company.Function
                     presion = vcpresion,
                     presiontime = DateTime.UtcNow,
                     color = vccolor,
-                    colortime = DateTime.UtcNow
+                    colortime = DateTime.UtcNow,
+                    fechaActualizacion = DateTime.UtcNow
                 },
                 aguaPotable = new AguaPotable
                 {
@@ -272,14 +275,16 @@ namespace Company.Function
                     niveltanques = apniveltanques,
                     niveltanquestime = DateTime.UtcNow,
                     color = apcolor,
-                    colortime = DateTime.UtcNow
+                    colortime = DateTime.UtcNow,
+                    fechaActualizacion = DateTime.UtcNow
                 },
                 nivelesCoagulacion = new NivelesCoagulacion
                 {
                     actual = ncactual,
                     actualtime = DateTime.UtcNow,
                     recomendado = decimal.Round(ncrecomendado, 1),
-                    recomendadotime = DateTime.UtcNow
+                    recomendadotime = DateTime.UtcNow,
+                    fechaActualizacion = DateTime.UtcNow
                 },
                 Partition = "potabilizacion123"
             };
@@ -348,12 +353,12 @@ namespace Company.Function
             };
         }
 
-     
+
 
 
         [FunctionName("consultaHistoricoCoagulante")]
         public static async Task<IActionResult> consultaHistoricoCoagulante([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
-        
+
         {
             string variable = req.Query["variable"];
             string inittime = req.Query["inittime"];
@@ -389,5 +394,63 @@ namespace Company.Function
             [JsonProperty("stargazers_count")]
             public string StarCount { get; set; }
         }
+
+
+        #region Crud Platas
+        //Create
+        [FunctionName("AgregarPlanta")]
+        public static async Task AgregarPlanta(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req, ExecutionContext context)
+
+        {
+            var planta = JsonConvert.DeserializeObject<Plantas>(await new StreamReader(req.Body).ReadToEndAsync());
+            CrudPlanta CrudPlanta = new CrudPlanta();
+            planta.Id = Guid.NewGuid().ToString();
+            await CrudPlanta.GetStartedAsync();
+            await CrudPlanta.AgregarPlanta(planta);
+        }
+
+
+        //Read
+        [FunctionName("ListarPlantas")]
+        public static async Task<IActionResult> ListarPlantas(
+        [HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
+        {
+            CrudPlanta CrudPlanta = new CrudPlanta();
+            await CrudPlanta.GetStartedAsync();
+            var plantas = await CrudPlanta.ObtenerTodoPlantas();
+
+            return new ContentResult
+            {
+                Content = JsonConvert.SerializeObject(plantas),
+                ContentType = "application/json",
+            };
+        }
+
+        //Update
+        [FunctionName("ActualizarPlanta")]
+        public static async Task ActualizarPlanta(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = null)] HttpRequest req, ExecutionContext context)
+
+        {
+            var planta = JsonConvert.DeserializeObject<Plantas>(await new StreamReader(req.Body).ReadToEndAsync());
+            CrudPlanta CrudPlanta = new CrudPlanta();
+            await CrudPlanta.GetStartedAsync();
+            await CrudPlanta.ActualizarPlanta(planta);
+        }
+
+        [FunctionName("EliminarPlanta")]
+        public static async Task EliminarPlanta(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = null)] HttpRequest req, ExecutionContext context)
+
+        {
+            var id = req.Query["Id"];
+            CrudPlanta CrudPlanta = new CrudPlanta();
+            await CrudPlanta.GetStartedAsync();
+            await CrudPlanta.EliminarPlanta(id);
+        }
+        #endregion
+
+
     }
 }

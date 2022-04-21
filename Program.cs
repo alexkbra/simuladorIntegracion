@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
+using signalre.Entities;
 
 namespace Company.Function
 {
@@ -16,11 +17,11 @@ namespace Company.Function
 
         /// The Azure Cosmos DB endpoint for running this GetStarted sample.
         //private string EndpointUrl = Environment.GetEnvironmentVariable("EndpointUrl");
-        private string EndpointUrl = "https://emuladorapicosmosdb.documents.azure.com:443/";//Environment.GetEnvironmentVariable("EndpointUrl");
+        private string EndpointUrl = "https://emuladorcosmosdbepm.documents.azure.com:443/";//Environment.GetEnvironmentVariable("EndpointUrl");
 
         /// The primary key for the Azure DocumentDB account.
         //private string PrimaryKey = Environment.GetEnvironmentVariable("PrimaryKey");
-        private string PrimaryKey = "shs6huBjg4uORDHyx6c5qv0gphxF5XmZ6DKW4hm9caeBZSobmyiij4xRD8p6Yj5FZxmjDbr9hx9f9ripDtehOg==";//Environment.GetEnvironmentVariable("PrimaryKey");
+        private string PrimaryKey = "F0LExYfBNnQB808eI1Yy9gD9ERw4aTnIaNolfr77nG976llQOHxe0A2PePfLtiH62mEsK8XSLPmQYX2iFLKYlw==";//Environment.GetEnvironmentVariable("PrimaryKey");
 
         // The Cosmos client instance
         private CosmosClient cosmosClient;
@@ -30,10 +31,12 @@ namespace Company.Function
 
         // The container we will create.
         public Container container;
+    
 
         // The name of the database and container we will create
         private string databaseId = "MensajesDatabase";
         private string containerId = "MensajesContainer";
+
 
         public async Task CreateDatabaseAsync()
         {
@@ -151,7 +154,7 @@ namespace Company.Function
             HttpClient client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Environment.GetEnvironmentVariable("AccessToken"));
-            var ncrecomendado = JsonConvert.DeserializeObject<decimal[]>(client.PostAsJsonAsync(@"http://coagulante-svc.eastus2.azurecontainer.io/score", new ConsultaIA
+            var ncrecomendado = JsonConvert.DeserializeObject<decimal[]>(client.PostAsJsonAsync(@"http://1d003ee0-0166-4440-bcf4-fb7b265c8451.eastus.azurecontainer.io/score", new ConsultaIA
             {
                 Año = DateTime.UtcNow.Year,
                 Mes = DateTime.UtcNow.Month,
