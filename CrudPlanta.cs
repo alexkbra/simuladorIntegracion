@@ -52,24 +52,24 @@ namespace signalre
 
         //Read
 
-        public async Task<Plantas[]> ObtenerTodoPlantas()
+        public async Task<IEnumerable<Plantas>> ObtenerTodoPlantas(string queryString)
         {
-            var sqlQueryText = "SELECT * FROM c";
-
-            QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
-            FeedIterator<Plantas> queryResultSetIterator = this.container.GetItemQueryIterator<Plantas>(queryDefinition);
-
-            List<Plantas> plantas = new List<Plantas>();
-
-            while (queryResultSetIterator.HasMoreResults)
+            var query = this.container.GetItemQueryIterator<Plantas>(new QueryDefinition(queryString));
+            List<Plantas> results = new List<Plantas>();
+            while (query.HasMoreResults)
             {
-                FeedResponse<Plantas> currentResultSet = await queryResultSetIterator.ReadNextAsync();
-                foreach (Plantas planta in currentResultSet)
-                {
-                    plantas.Add(planta);
-                }
+                var response = await query.ReadNextAsync();
+
+                results.AddRange(response.ToList());
             }
-            return plantas.ToArray();
+
+            return results;
+        }
+
+        public async Task<Plantas> ObtenerPlanta(string id)
+        {
+            ItemResponse<Plantas> response = await this.container.ReadItemAsync<Plantas>(id, new PartitionKey(id));
+            return response.Resource;
         }
 
         //Update

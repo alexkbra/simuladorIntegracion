@@ -418,7 +418,23 @@ namespace Company.Function
         {
             CrudPlanta CrudPlanta = new CrudPlanta();
             await CrudPlanta.GetStartedAsync();
-            var plantas = await CrudPlanta.ObtenerTodoPlantas();
+            var plantas = await CrudPlanta.ObtenerTodoPlantas("SELECT * FROM c");
+
+            return new ContentResult
+            {
+                Content = JsonConvert.SerializeObject(plantas),
+                ContentType = "application/json",
+            };
+        }
+
+        [FunctionName("ObtenerPlantas")]
+        public static async Task<IActionResult> ObtenerPlantas(
+        [HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ExecutionContext context)
+        {
+            var id = req.Query["Id"];
+            CrudPlanta CrudPlanta = new CrudPlanta();
+            await CrudPlanta.GetStartedAsync();
+            var plantas = await CrudPlanta.ObtenerPlanta(id);
 
             return new ContentResult
             {
