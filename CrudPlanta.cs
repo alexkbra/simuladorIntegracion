@@ -45,9 +45,9 @@ namespace signalre
 
         #region CRUD Plantas
         //Create
-        public async Task AgregarPlanta(Plantas planta)
+        public async Task<Plantas> AgregarPlanta(Plantas planta)
         {
-            await this.container.CreateItemAsync<Plantas>(planta, new PartitionKey(planta.Id));
+            return await this.container.CreateItemAsync<Plantas>(planta, new PartitionKey(planta.Id));
         }
 
         //Read
@@ -73,15 +73,15 @@ namespace signalre
         }
 
         //Update
-        public async Task ActualizarPlanta(Plantas planta)
+        public async Task<Plantas> ActualizarPlanta(Plantas planta)
         {
-            await this.container.UpsertItemAsync<Plantas>(planta, new PartitionKey(planta.Id));
+            return await this.container.UpsertItemAsync<Plantas>(planta, new PartitionKey(planta.Id));
         }
 
         //Delete
-        public async Task EliminarPlanta(string id)
+        public async Task<Plantas> EliminarPlanta(string id)
         {
-            await this.container.DeleteItemAsync<Plantas>(id, new PartitionKey(id));
+            return await this.container.DeleteItemAsync<Plantas>(id, new PartitionKey(id));
         }
         #endregion
     }

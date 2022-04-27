@@ -163,15 +163,15 @@ namespace Company.Function
 
             var id = Guid.NewGuid();
             int precipitacion1 = new Random().Next(15, 20);
-            int temperatura1 = new Random().Next(80, 85);
+            int temperatura1 = new Random().Next(10, 35);
             int humendad1 = new Random().Next(0, 10);
 
             int precipitacion2 = new Random().Next(25, 35);
-            int temperatura2 = new Random().Next(15, 25);
+            int temperatura2 = new Random().Next(10, 35);
             int humendad2 = new Random().Next(5, 15);
 
             int precipitacion3 = new Random().Next(35, 45);
-            int temperatura3 = new Random().Next(25, 35);
+            int temperatura3 = new Random().Next(10, 35);
             int humendad3 = new Random().Next(10, 20);
 
             int vcturbiedadentrada = new Random().Next(0, 5);
@@ -399,7 +399,7 @@ namespace Company.Function
         #region Crud Platas
         //Create
         [FunctionName("AgregarPlanta")]
-        public static async Task AgregarPlanta(
+        public static async Task<IActionResult> AgregarPlanta(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req, ExecutionContext context)
 
         {
@@ -407,7 +407,13 @@ namespace Company.Function
             CrudPlanta CrudPlanta = new CrudPlanta();
             planta.Id = Guid.NewGuid().ToString();
             await CrudPlanta.GetStartedAsync();
-            await CrudPlanta.AgregarPlanta(planta);
+            var plantaResp = await CrudPlanta.AgregarPlanta(planta);
+
+            return new ContentResult
+            {
+                Content = JsonConvert.SerializeObject(plantaResp),
+                ContentType = "application/json",
+            };
         }
 
 
@@ -445,25 +451,37 @@ namespace Company.Function
 
         //Update
         [FunctionName("ActualizarPlanta")]
-        public static async Task ActualizarPlanta(
+        public static async Task<IActionResult> ActualizarPlanta(
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = null)] HttpRequest req, ExecutionContext context)
 
         {
             var planta = JsonConvert.DeserializeObject<Plantas>(await new StreamReader(req.Body).ReadToEndAsync());
             CrudPlanta CrudPlanta = new CrudPlanta();
             await CrudPlanta.GetStartedAsync();
-            await CrudPlanta.ActualizarPlanta(planta);
+            var plantaResp = await CrudPlanta.ActualizarPlanta(planta);
+
+            return new ContentResult
+            {
+                Content = JsonConvert.SerializeObject(plantaResp),
+                ContentType = "application/json",
+            };
         }
 
         [FunctionName("EliminarPlanta")]
-        public static async Task EliminarPlanta(
+        public static async Task<IActionResult> EliminarPlanta(
         [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = null)] HttpRequest req, ExecutionContext context)
 
         {
             var id = req.Query["Id"];
             CrudPlanta CrudPlanta = new CrudPlanta();
             await CrudPlanta.GetStartedAsync();
-            await CrudPlanta.EliminarPlanta(id);
+            var plantaResp =  await CrudPlanta.EliminarPlanta(id);
+
+            return new ContentResult
+            {
+                Content = JsonConvert.SerializeObject(plantaResp),
+                ContentType = "application/json",
+            };
         }
         #endregion
 
